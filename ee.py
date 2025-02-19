@@ -66,15 +66,6 @@ def update_selected_member_label(member_name):
     selected_item_label.config(text=f"{member_name}")
 
 '''
-# 更新顯示武器數據
-  update_weapon_data(selected_member, save_data, address_map, weapon_vars, weapon_type_mapping, WEAPON_ID_DESCRIPTIONS, WEAPON_SPECIAL_EFFECTS)
-    
-# 保存武器數據
-  save_weapon_data(save_data, address_map[selected_member], weapon_vars, weapon_type_mapping, WEAPON_ID_DESCRIPTIONS, WEAPON_SPECIAL_EFFECTS)
-    
-# 恢復武器選單的隊員選取狀態
-  on_weapon_select(team_name_mapping, selected_member, team_listbox)
-
 # 處理武器數據段落
 # 解析武器數據
 def parse_weapon_data(data, start_addr):
@@ -420,6 +411,7 @@ team_listbox = tk.Listbox(team_frame, width=15, height=20)
 team_listbox.pack(fill='y')
 team_listbox.bind('<<ListboxSelect>>', on_member_select)
 
+
 # 創建標籤頁
 tab_control = ttk.Notebook(main_frame)
 tab_control.pack(side='right', fill='both', expand=True)
@@ -504,6 +496,14 @@ for i in range(9):  # 9組武器
             ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WEAPON_ID_DESCRIPTIONS.values()), width=22).pack(side='left', padx=5)
         else:
             ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WEAPON_SPECIAL_EFFECTS.values()), width=10).pack(side='left', padx=5)
+# 更新顯示武器數據
+update_weapon_data(selected_member, save_data, address_map, weapon_vars)
+
+# 保存武器數據
+save_weapon_data(save_data, address_map[selected_member], weapon_vars)
+
+# 恢復武器選單的隊員選取狀態
+on_weapon_select(selected_member, team_listbox)
 
 #防具
 defpon_vars = []
@@ -593,5 +593,6 @@ load_button.pack(side='left', padx=5)
 # 增加存檔按鈕
 save_button = ttk.Button(button_frame, text="存檔", command=save_to_file)
 save_button.pack(side='left', padx=5)
+
 
 root.mainloop()
