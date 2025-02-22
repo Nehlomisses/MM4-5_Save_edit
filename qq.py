@@ -1,7 +1,8 @@
 import struct  # 處理二進位數據
 import tkinter as tk  # 導入 tkinter 模組，用於 GUI
 from tkinter import ttk, filedialog, messagebox  # 導入 tkinter 的子模組
-from common_dicts import (  # 從 common_dicts.py 導入多個字典
+# 從 common_dicts.py 導入多個字典
+from XEEN_editdata.common_dicts import (  
     weapon_type_mapping,  # 武器類型對應表
     WEAPON_ID_DESCRIPTIONS,  # 武器 ID 描述對應表
     WEAPON_SPECIAL_EFFECTS,  # 武器特殊效果對應表
@@ -19,7 +20,7 @@ from common_dicts import (  # 從 common_dicts.py 導入多個字典
     class_nb, #職業
 )
 import os  # 導入 os 模組，用於操作系統相關功能
-import gui_utils,weapon_utils #模組化區塊
+import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils #模組化區塊
 
 # 全局變量初始化 (只保留這裡的初始化)
 game_save_file = None  # 遊戲存檔檔案路徑，初始為 None
@@ -435,10 +436,10 @@ def on_member_select(event):
             selected_member = list(team_name_mapping.values())[selected_index]  # 獲取選取隊員的名稱
             if selected_member:  # 確保選取了有效的隊員
                 member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]  # 獲取隊員名稱
-                gui_utils.update_selected_member_label(member_name)  # 更新標籤頁標題 只能傳一個參數
+                XEEN_editdata.gui_utils.update_selected_member_label(member_name)  # 更新標籤頁標題 只能傳一個參數
 
                 # 1. 導入 class_nb 字典
-                from common_dicts import class_nb
+                from XEEN_editdata.common_dicts import class_nb
 
                 # 2. 獲取能力數據的起始位址
                 name_addr, attr_start_addr, resist_start_addr = member_addresses[selected_member]
@@ -457,13 +458,13 @@ def on_member_select(event):
                 member_occupation = class_nb[occupation_code]
 
                 # 6. 更新标签文字
-                gui_utils.selected_member_label.config(text=f"{member_name}-{member_occupation}")  # 更新**能力**標籤文字
-                gui_utils.selected_weapon_label.config(text=f"{member_name}-{member_occupation}")  # 更新**武器**標籤文字
-                gui_utils.selected_def_label.config(text=f"{member_name}-{member_occupation}")  # 更新**防具**標籤文字
-                gui_utils.selected_ring_label.config(text=f"{member_name}-{member_occupation}")  # 更新**配件**標籤文字
-                gui_utils.selected_item_label.config(text=f"{member_name}-{member_occupation}")  # 更新**雜項**標籤文字
+                XEEN_editdata.gui_utils.selected_member_label.config(text=f"{member_name}-{member_occupation}")  # 更新**能力**標籤文字
+                XEEN_editdata.gui_utils.selected_weapon_label.config(text=f"{member_name}-{member_occupation}")  # 更新**武器**標籤文字
+                XEEN_editdata.gui_utils.selected_def_label.config(text=f"{member_name}-{member_occupation}")  # 更新**防具**標籤文字
+                XEEN_editdata.gui_utils.selected_ring_label.config(text=f"{member_name}-{member_occupation}")  # 更新**配件**標籤文字
+                XEEN_editdata.gui_utils.selected_item_label.config(text=f"{member_name}-{member_occupation}")  # 更新**雜項**標籤文字
 
-                weapon_utils.update_weapon_data(selected_member)  # 更新武器數據
+                XEEN_editdata.weapon_utils.update_weapon_data(selected_member)  # 更新武器數據
                 update_attribute_data(selected_member)  # 更新屬性數據
                 update_defpon_data(selected_member)  # 更新防具數據
                 update_ringpon_data(selected_member)  # 更新配件數據
@@ -540,14 +541,14 @@ def save_to_file():
     try:
         global selected_member, save_data, address_map, weapon_vars  # 聲明使用全局變數
 
-        # 確保 weapon_utils 使用最新的全局變數
-        weapon_utils.address_map = address_map
-        weapon_utils.weapon_vars = weapon_vars
-        weapon_utils.save_data = save_data
+        # 確保 XEEN_editdata.weapon_utils 使用最新的全局變數
+        XEEN_editdata.weapon_utils.address_map = address_map
+        XEEN_editdata.weapon_utils.weapon_vars = weapon_vars
+        XEEN_editdata.weapon_utils.save_data = save_data
 
 
         if selected_member:
-            weapon_utils.save_weapon_data(selected_member)  # 修改這裡
+            XEEN_editdata.weapon_utils.save_weapon_data(selected_member)  # 修改這裡
             save_attribute_data(selected_member)
             save_defpon_data(selected_member)
             save_ringpon_data(selected_member)
@@ -635,10 +636,10 @@ def load_new_file():
                 parse_team_data(save_data)  # 解析隊伍數據
                 update_team_data_display()  # 更新隊伍數據顯示
 
-                # 將主程式的全域變數賦值給 weapon_utils
-                weapon_utils.address_map = address_map
-                weapon_utils.weapon_vars = weapon_vars
-                weapon_utils.save_data = save_data
+                # 將主程式的全域變數賦值給 XEEN_editdata.weapon_utils
+                XEEN_editdata.weapon_utils.address_map = address_map
+                XEEN_editdata.weapon_utils.weapon_vars = weapon_vars
+                XEEN_editdata.weapon_utils.save_data = save_data
         except Exception as e:
             messagebox.showerror("錯誤", f"讀取檔案或更新數據時發生錯誤：{e}")  # 顯示錯誤訊息
 
@@ -724,7 +725,7 @@ item_frame.pack(fill='both', expand=True)  # 填充標籤頁
 selected_item_label = ttk.Label(item_frame, text="")  # 創建標籤，用於顯示選取的隊員名稱
 selected_item_label.pack()  # 放置標籤
 
-gui_utils.initialize_labels(selected_member_label, selected_weapon_label, selected_def_label, selected_ring_label, selected_item_label)
+XEEN_editdata.gui_utils.initialize_labels(selected_member_label, selected_weapon_label, selected_def_label, selected_ring_label, selected_item_label)
 
 # 創建隊伍資訊標籤頁
 teams_frame = ttk.Frame(tab_control)  # 創建隊伍資訊標籤頁框架
@@ -833,7 +834,7 @@ tab_control.pack(expand=1, fill='both')  # 使用 pack 佈局管理器，填充�
 # 綁定武器選單的事件
 for i in range(len(weapon_vars)):
     for var in weapon_vars[i]:
-        var.trace('w', lambda *args, selected_member=selected_member, team_name_mapping=team_name_mapping, team_listbox=team_listbox: weapon_utils.on_weapon_select(selected_member, team_name_mapping, team_listbox))
+        var.trace('w', lambda *args, selected_member=selected_member, team_name_mapping=team_name_mapping, team_listbox=team_listbox: XEEN_editdata.weapon_utils.on_weapon_select(selected_member, team_name_mapping, team_listbox))
 '''
 # 創建按鈕框架來放置按鈕
 button_frame = ttk.Frame(root)  # 創建按鈕框架
