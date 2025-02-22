@@ -16,6 +16,7 @@ from common_dicts import (  # 從 common_dicts.py 導入多個字典
     team_addresses,  # 隊伍資訊地址
     team_members,  # 隊員列表
     address_map,  # 位址映射表
+    class_nb, #職業
 )
 import os  # 導入 os 模組，用於操作系統相關功能
 import gui_utils,weapon_utils #模組化區塊
@@ -422,28 +423,57 @@ def write_team_data():
 
 
 # 處理隊員選取事件
-# 處理隊員選取事件
 def on_member_select(event):
     """
     處理隊員選取事件，更新 GUI 顯示的隊員數據。
     """
     try:
-        global selected_member,save_data, address_map  # 聲明使用全局變數 selected_member
+        global selected_member, save_data, address_map  # 聲明使用全局變數 selected_member
+
         if team_listbox.curselection():  # 檢查是否有選取隊員
             selected_index = team_listbox.curselection()[0]  # 獲取選取隊員的索引
             selected_member = list(team_name_mapping.values())[selected_index]  # 獲取選取隊員的名稱
             if selected_member:  # 確保選取了有效的隊員
                 member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]  # 獲取隊員名稱
-                gui_utils.update_selected_member_label(member_name)  # 更新標籤頁標題
+                gui_utils.update_selected_member_label(member_name)  # 更新標籤頁標題 只能傳一個參數
+
+                # 1. 導入 class_nb 字典
+                from common_dicts import class_nb
+
+                # 2. 獲取能力數據的起始位址
+                name_addr, attr_start_addr, resist_start_addr = member_addresses[selected_member]
+
+                # 3. 計算職業位址
+                occupation_address = attr_start_addr - 1
+
+                # 4. 從檔案中讀取職業代碼
+                file_path = game_save_file  # 使用全局变量 game_save_file
+                with open(file_path, "rb") as f:
+                    f.seek(occupation_address)
+                    byte_data = f.read(1)
+                    occupation_code = byte_data[0] #** 讀取到的byte 數值**
+
+                # 5. 轉換文字
+                member_occupation = class_nb[occupation_code]
+
+                # 6. 更新标签文字
+                gui_utils.selected_member_label.config(text=f"{member_name}-{member_occupation}")  # 更新**能力**標籤文字
+                gui_utils.selected_weapon_label.config(text=f"{member_name}-{member_occupation}")  # 更新**武器**標籤文字
+                gui_utils.selected_def_label.config(text=f"{member_name}-{member_occupation}")  # 更新**防具**標籤文字
+                gui_utils.selected_ring_label.config(text=f"{member_name}-{member_occupation}")  # 更新**配件**標籤文字
+                gui_utils.selected_item_label.config(text=f"{member_name}-{member_occupation}")  # 更新**雜項**標籤文字
+
                 weapon_utils.update_weapon_data(selected_member)  # 更新武器數據
                 update_attribute_data(selected_member)  # 更新屬性數據
                 update_defpon_data(selected_member)  # 更新防具數據
                 update_ringpon_data(selected_member)  # 更新配件數據
                 update_itempon_data(selected_member)  # 更新雜項數據
+
     except ValueError:
         print("警告: 無法選擇隊員。")  # 打印警告訊息
     except Exception as e:
         messagebox.showerror("錯誤", f"處理隊員選取事件發生錯誤：{e}")  # 顯示錯誤訊息
+
 
 # 保存能力和抗性數據
 def save_attribute_data(member):
