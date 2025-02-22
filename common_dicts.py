@@ -306,17 +306,53 @@ item_type_mapping = {
     0x49:"神恩浩盪",
 }
 
-# 隊員地址
-member_addresses = {
-    '隊員1': (0x0E01, 0x0E15, 0x0F38),
-    '隊員2': (0x0F63, 0x0F77, 0x109A),
-    '隊員3': (0x10C5, 0x10D9, 0x11FC),
-    '隊員4': (0x1227, 0x123B, 0x135E),
-    '隊員5': (0x164D, 0x1661, 0x1784),
-    '隊員6': (0x1D37, 0x1D4B, 0x1E6E),
-    '隊員7': (0x215D, 0x2171, 0x2294),
-    '隊員8': (0x26E5, 0x26F9, 0x281C),
+# 字典檔 (member_data.py)
+OFFSET1 = 0x14
+OFFSET2 = 0x123
+MAP_OFFSET = 0xA6
+
+# 最後一個隊員的編號 (例如，如果想要到隊員20，就設為 20)
+#NUM_TEAMS = 24
+
+# 提供第一個隊員的 base address
+FIRST_TEAM_BASE_ADDRESS = 0x0E01
+
+# 每個隊員 base address 之間的間隔 (已確定)
+ADDRESS_INCREMENT = 0x162
+
+# 使用列表生成式和字典生成式產生 team_data 最大創造人數為24
+team_data = {
+    f'隊員{i}': FIRST_TEAM_BASE_ADDRESS + (i - 1) * ADDRESS_INCREMENT
+    for i in range(1, 25)
 }
+
+# 直接創建變數 member_addresses
+member_addresses = {}
+for member, base_address in team_data.items():
+    address1 = base_address
+    address2 = base_address + OFFSET1
+    address3 = address2 + OFFSET2
+    member_addresses[member] = (address1, address2, address3)
+
+# 直接創建變數 address_map
+address_map = {}
+for member, base_address in team_data.items():
+    address_map[member] = base_address + MAP_OFFSET
+
+team_members = list(team_data.keys()) # 從 team_data 取得隊員名稱列表
+
+'''
+# 測試程式碼 (顯示為十六進制)
+print("Team Members:", team_members)
+print("\nMember Addresses:")
+for member, addresses in member_addresses.items():
+    address1, address2, address3 = addresses
+    print(f"  {member}: (0x{address1:X}, 0x{address2:X}, 0x{address3:X})")
+
+print("\nAddress Map:")
+for member, address in address_map.items():
+    print(f"  {member}: 0x{address:X}")
+'''
 
 attributes = [
     '力量', '智慧', '人格', '耐力', '速度', '準確', '運氣', '等級'
@@ -328,20 +364,6 @@ resistances = [
 
 team_labels = ["目前年分", "隊伍金幣", "銀行存款", "隊伍寶石", "銀行寶石","紅寶石塊","鑽石塊"]
 team_addresses = [(0x39E3, 2), (0x39FB, 4), (0x3A03, 4), (0x39FF, 4), (0x3A07, 4), (0x3AB7, 1), (0x3ABA, 1)]
-
-team_members = ['隊員1', '隊員2', '隊員3', '隊員4', '隊員5', '隊員6', '隊員7', '隊員8']
-
-# 隊員裝備起始位址
-address_map = {
-    '隊員1': 0x0ea7,
-    '隊員2': 0x1009,
-    '隊員3': 0x116b,
-    '隊員4': 0x12cd,
-    '隊員5': 0x16F3,
-    '隊員6': 0x1ddd,
-    '隊員7': 0x2203,
-    '隊員8': 0x278b,
-}
 
 class_nb = {
     0x00:"武士",

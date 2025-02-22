@@ -673,9 +673,21 @@ team_frame = ttk.Frame(main_frame)  # 創建隊員欄框架，用於顯示隊員
 team_frame.pack(side='left', fill='y')  # 使用 pack 佈局管理器，將隊員欄框架放置在主框架的左側，並沿 Y 軸填充
 ttk.Label(team_frame, text="隊員").pack()  # 創建標籤，顯示 "隊員" 文字
 
-team_listbox = tk.Listbox(team_frame, width=15, height=20)  # 創建列表框，用於顯示隊員名稱
-team_listbox.pack(fill='y')  # 使用 pack 佈局管理器，沿 Y 軸填充
+# 創建列表框和滾動條
+team_listbox_frame = ttk.Frame(team_frame)  # 創建一個框架來容納列表框和滾動條
+team_listbox_frame.pack(fill='both', expand=True)
+
+team_listbox = tk.Listbox(team_listbox_frame, width=15, height=20)  # 創建列表框，用於顯示隊員名稱
+team_listbox.pack(side='left', fill='both', expand=True)  # 使用 pack 佈局管理器，沿 Y 軸填充，並允許水平和垂直擴展
 team_listbox.bind('<<ListboxSelect>>', on_member_select)  # 綁定列表框的選取事件到 on_member_select 函數
+
+# 創建滾動條
+scrollbar = ttk.Scrollbar(team_listbox_frame, orient="vertical", command=team_listbox.yview)
+scrollbar.pack(side='right', fill='y')
+
+# 將滾動條配置給 Listbox
+team_listbox.config(yscrollcommand=scrollbar.set)
+
 
 # 創建標籤頁
 tab_control = ttk.Notebook(main_frame)  # 創建標籤頁控制元件
