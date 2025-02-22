@@ -1,6 +1,9 @@
-import struct  # 處理二進位數據
-import tkinter as tk  # 導入 tkinter 模組，用於 GUI
+#模組化版本
+
+import os,struct,tkinter as tk  # 導入 os 模組，用於操作系統相關功能,struct處理二進位數據,導入 tkinter 模組，用於 GUI
+import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils #模組化區塊
 from tkinter import ttk, filedialog, messagebox  # 導入 tkinter 的子模組
+
 # 從 common_dicts.py 導入多個字典
 from XEEN_editdata.common_dicts import (  
     weapon_type_mapping,  # 武器類型對應表
@@ -19,8 +22,7 @@ from XEEN_editdata.common_dicts import (
     address_map,  # 位址映射表
     class_nb, #職業
 )
-import os  # 導入 os 模組，用於操作系統相關功能
-import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils #模組化區塊
+
 
 # 全局變量初始化 (只保留這裡的初始化)
 game_save_file = None  # 遊戲存檔檔案路徑，初始為 None
