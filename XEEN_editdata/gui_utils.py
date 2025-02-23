@@ -1,5 +1,26 @@
 import tkinter as tk
 from tkinter import ttk
+import struct
+
+# 通用函數：從指定位址解析數據
+def parse_data(data, addr, data_type='B', count=1):
+    """
+    從數據 buffer 的指定位址解析數據。
+
+    Args:
+        data (bytearray): 包含遊戲存檔數據的 bytearray。
+        addr (int): 要讀取的數據的起始位址。
+        data_type (str, optional): 數據類型，預設為 'B' (unsigned byte)。
+        count (int, optional): 要讀取的數據數量，預設為 1。
+
+    Returns:
+        tuple: 包含解析後數據的 tuple。 如果發生錯誤，則返回包含預設值 (0) 的 tuple。
+    """
+    try:
+        return struct.unpack_from(f'{count}{data_type}', data, addr)  # 使用 struct.unpack_from 解析數據
+    except struct.error as e:
+        print(f"錯誤: 無法從位址 {addr} 解析數據: {e}")  # 打印錯誤訊息
+        return (0,) * count  # 返回包含預設值 (0) 的 tuple
 
 def update_selected_member_label(member_name):  # 修改此處
     """

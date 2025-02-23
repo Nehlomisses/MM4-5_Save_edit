@@ -170,6 +170,7 @@ WEAPON_ID_DESCRIPTIONS = {
     0x20:"十字弓(4~8)", 
     0x21:"投石索(2~6)", 
     0x22:"伏魔神劍",
+    0x38:"聖甲蟲(作弊弓)",
 }
 
 WEAPON_SPECIAL_EFFECTS = {

@@ -1,5 +1,6 @@
 import struct
 from tkinter import messagebox
+import XEEN_editdata
 from XEEN_editdata.common_dicts import (
     weapon_type_mapping,
     WEAPON_ID_DESCRIPTIONS,
@@ -10,26 +11,6 @@ from XEEN_editdata.common_dicts import (
 address_map = None
 weapon_vars = None # 宣告為全域變數
 save_data = None
-
-# 通用函數：從指定位址解析數據
-def parse_data(data, addr, data_type='B', count=1):
-    """
-    從數據 buffer 的指定位址解析數據。
-
-    Args:
-        data (bytearray): 包含遊戲存檔數據的 bytearray。
-        addr (int): 要讀取的數據的起始位址。
-        data_type (str, optional): 數據類型，預設為 'B' (unsigned byte)。
-        count (int, optional): 要讀取的數據數量，預設為 1。
-
-    Returns:
-        tuple: 包含解析後數據的 tuple。 如果發生錯誤，則返回包含預設值 (0) 的 tuple。
-    """
-    try:
-        return struct.unpack_from(f'{count}{data_type}', data, addr)  # 使用 struct.unpack_from 解析數據
-    except struct.error as e:
-        print(f"錯誤: 無法從位址 {addr} 解析數據: {e}")  # 打印錯誤訊息
-        return (0,) * count  # 返回包含預設值 (0) 的 tuple
 
 def parse_weapon_data(data, start_addr):
     """
@@ -45,7 +26,7 @@ def parse_weapon_data(data, start_addr):
     weapons = []  # 存儲武器數據的列表
     for i in range(9):  # 每個隊員有 9 個武器欄位
         addr = start_addr + i * 4  # 計算武器數據的位址
-        weapon_data = parse_data(data, addr, count=3)  # 使用通用函數解析 3 個位元組的數據
+        weapon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=3)  # 使用通用函數解析 3 個位元組的數據
         weapons.append(weapon_data)  # 將武器數據添加到列表中
     return weapons  # 返回武器數據列表
 
