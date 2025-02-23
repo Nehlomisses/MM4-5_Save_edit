@@ -1,7 +1,7 @@
 #模組化版本
 
 import os,struct,tkinter as tk  # 導入 os 模組，用於操作系統相關功能,struct處理二進位數據,導入 tkinter 模組，用於 GUI
-import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils #模組化區塊
+import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils,XEEN_editdata.defpon_utils #模組化區塊
 from tkinter import ttk, filedialog, messagebox  # 導入 tkinter 的子模組
 
 # 從 common_dicts.py 導入多個字典
@@ -27,33 +27,13 @@ from XEEN_editdata.common_dicts import (
 # 全局變量初始化 (只保留這裡的初始化)
 game_save_file = None  # 遊戲存檔檔案路徑，初始為 None
 save_data = None  # 存檔數據，初始為 None
-#selected_member = None  # 目前選取的隊員，初始為 None
+selected_member = None  # 目前選取的隊員，初始為 None
 team_name_mapping = {}  # 隊員名稱與隊員物件的映射，初始為空字典
 attribute_vars = {}  # 屬性變數，用於 GUI 更新，初始為空字典
 weapon_vars = []  # 武器變數，用於 GUI 更新，初始為空列表
 defpon_vars = []  # 防具變數，用於 GUI 更新，初始為空列表
 ring_vars = []  # 戒指變數，用於 GUI 更新，初始為空列表
 item_vars = []  # 物品變數，用於 GUI 更新，初始為空列表
-
-# 通用函數：從指定位址解析數據
-def parse_data(data, addr, data_type='B', count=1):
-    """
-    從數據 buffer 的指定位址解析數據。
-
-    Args:
-        data (bytearray): 包含遊戲存檔數據的 bytearray。
-        addr (int): 要讀取的數據的起始位址。
-        data_type (str, optional): 數據類型，預設為 'B' (unsigned byte)。
-        count (int, optional): 要讀取的數據數量，預設為 1。
-
-    Returns:
-        tuple: 包含解析後數據的 tuple。 如果發生錯誤，則返回包含預設值 (0) 的 tuple。
-    """
-    try:
-        return struct.unpack_from(f'{count}{data_type}', data, addr)  # 使用 struct.unpack_from 解析數據
-    except struct.error as e:
-        print(f"錯誤: 無法從位址 {addr} 解析數據: {e}")  # 打印錯誤訊息
-        return (0,) * count  # 返回包含預設值 (0) 的 tuple
 
 # 載入遊戲存檔數據
 def load_save_data(file_path):
@@ -93,7 +73,7 @@ def parse_attribute_data(data, start_addr):
     for i, attribute in enumerate(attributes):  # 遍歷屬性列表
         # 對於等級屬性，地址偏移量是特定的
         addr = start_addr + 7 * 2 + 1 if attribute == '等級' else start_addr + i * 2
-        attr_data[attribute] = parse_data(data, addr)[0]  # 使用通用函數解析數據
+        attr_data[attribute] = XEEN_editdata.gui_utils.parse_data(data, addr)[0]  # 使用通用函數解析數據
     return attr_data  # 返回能力數據字典
 
 # 解析抗性數據
@@ -111,7 +91,7 @@ def parse_resistance_data(data, start_addr):
     resist_data = {}  # 存儲解析後的抗性數據
     for i, resistance in enumerate(resistances):  # 遍歷抗性列表
         addr = start_addr + i * 2  # 計算抗性數據的位址
-        resist_data[resistance] = parse_data(data, addr)[0]  # 使用通用函數解析數據
+        resist_data[resistance] = XEEN_editdata.gui_utils.parse_data(data, addr)[0]  # 使用通用函數解析數據
     return resist_data  # 返回抗性數據字典
 
 # 更新顯示的能力和抗性數據
@@ -135,87 +115,6 @@ def update_attribute_data(member):
     except Exception as e:
         messagebox.showerror("錯誤", f"更新屬性資料時發生錯誤：{e}")  # 顯示錯誤訊息
 
-# 解析防具數據
-def parse_defpon_data(data, start_addr):
-    """
-    解析隊員的防具數據。
-
-    Args:
-        data (bytearray): 包含遊戲存檔數據的 bytearray。
-        start_addr (int): 防具數據的起始位址。
-
-    Returns:
-        list: 包含解析後防具數據的列表。
-    """
-    defpons = []  # 存儲防具數據的列表
-    for i in range(9):  # 每個隊員有 9 個防具欄位
-        addr = start_addr + i * 4  # 計算防具數據的位址
-        defpon_data = parse_data(data, addr, count=2)  # 使用通用函數解析 2 個位元組的數據
-        defpons.append(defpon_data)  # 將防具數據添加到列表中
-    return defpons  # 返回防具數據列表
-
-# 更新顯示的防具數據
-def update_defpon_data(member):
-    """
-    更新 GUI 顯示的防具數據。
-
-    Args:
-        member (str): 隊員名稱。
-    """
-    try:
-        base_addr = address_map[member] + 0x24  # 根據隊員名稱獲取防具數據的起始位址 (相較於武器位址偏移 0x24)
-        defpon_data = parse_defpon_data(save_data, base_addr)  # 解析防具數據
-        for idx, defpon in enumerate(defpon_data):  # 遍歷防具數據
-            if idx < len(defpon_vars):  # 確保 GUI 元素存在
-                # 使用防具數據更新 GUI 變數
-                defpon_vars[idx][0].set(weapon_type_mapping.get(defpon[0], "未知"))
-                defpon_vars[idx][1].set(def_Amo.get(defpon[1], "未知"))
-    except KeyError:
-        messagebox.showerror("錯誤", f"找不到 '{member}' 的防具地址。")  # 顯示錯誤訊息
-    except Exception as e:
-        messagebox.showerror("錯誤", f"更新防具數據時發生錯誤：{e}")  # 顯示錯誤訊息
-
-# 保存防具數據
-def save_defpon_data(member):
-    """
-    保存 GUI 中修改後的防具數據到存檔檔案。
-
-    Args:
-        member (str): 隊員名稱。
-    """
-    try:
-        base_addr = address_map[member] + 0x24  # 根據隊員名稱獲取防具數據的起始位址
-        for idx, defpon_var in enumerate(defpon_vars):  # 遍歷防具 GUI 變數
-            addr = base_addr + idx * 4  # 計算防具數據的位址
-            # 從 GUI 變數獲取防具數據，並轉換為對應的 ID
-            defpon1 = next((key for key, value in weapon_type_mapping.items() if value == defpon_var[0].get()), None)
-            defpon2 = next((key for key, value in def_Amo.items() if value == defpon_var[1].get()), None)
-
-            if defpon1 is not None and defpon2 is not None:
-                struct.pack_into('B', save_data, addr, defpon1)  # 保存防具類型
-                struct.pack_into('B', save_data, addr + 1, defpon2)  # 保存防具屬性
-    except KeyError:
-        messagebox.showerror("錯誤", f"找不到 '{member}' 的防具地址。")  # 顯示錯誤訊息
-    except Exception as e:
-        messagebox.showerror("錯誤", f"保存防具數據時發生錯誤：{e}")  # 顯示錯誤訊息
-
-# 恢復防具選單的隊員選取狀態
-def on_defpon_select(*args):
-    """
-    在防具選單中恢復隊員選取狀態。
-    """
-    try:
-        global selected_member
-        if selected_member and team_name_mapping:  # 增加判斷，確保有選取隊員且隊伍資訊不為空
-            member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]  # 獲取隊員名稱
-            if member_name in team_listbox.get(0, 'end'):  # 檢查隊員是否存在於清單中
-                team_listbox.selection_clear(0, 'end')  # 清除所有選取
-                team_listbox.selection_set(team_listbox.get(0, 'end').index(member_name))  # 重新選取隊員
-    except ValueError:
-        print("警告: 無法恢復隊員選擇。")  # 打印警告訊息
-    except Exception as e:
-        messagebox.showerror("錯誤", f"恢復防具選單的隊員選取狀態發生錯誤：{e}")  # 顯示錯誤訊息
-
 # 解析配件數據
 def parse_ringpon_data(data, start_addr):
     """
@@ -231,7 +130,7 @@ def parse_ringpon_data(data, start_addr):
     ringpons = []  # 存儲配件數據的列表
     for i in range(9):  # 每個隊員有 9 個配件欄位
         addr = start_addr + i * 4  # 計算配件數據的位址
-        ringpon_data = parse_data(data, addr, count=2)  # 使用通用函數解析 2 個位元組的數據
+        ringpon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=2)  # 使用通用函數解析 2 個位元組的數據
         ringpons.append(ringpon_data)  # 將配件數據添加到列表中
     return ringpons  # 返回配件數據列表
 
@@ -312,7 +211,7 @@ def parse_itempon_data(data, start_addr):
     itempons = []  # 存儲雜項數據的列表
     for i in range(9):  # 每個隊員有 9 個雜項欄位
         addr = start_addr + i * 4  # 計算雜項數據的位址
-        itempon_data = parse_data(data, addr, count=3)  # 使用通用函數解析 3 個位元組的數據
+        itempon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=3)  # 使用通用函數解析 3 個位元組的數據
         itempons.append(itempon_data)  # 將雜項數據添加到列表中
     return itempons  # 返回雜項數據列表
 
@@ -467,8 +366,9 @@ def on_member_select(event):
                 XEEN_editdata.gui_utils.selected_item_label.config(text=f"{member_name}-{member_occupation}")  # 更新**雜項**標籤文字
 
                 XEEN_editdata.weapon_utils.update_weapon_data(selected_member)  # 更新武器數據
+                XEEN_editdata.defpon_utils.update_defpon_data(selected_member)  # 更新防具數據
                 update_attribute_data(selected_member)  # 更新屬性數據
-                update_defpon_data(selected_member)  # 更新防具數據
+                #update_defpon_data(selected_member)  # 更新防具數據
                 update_ringpon_data(selected_member)  # 更新配件數據
                 update_itempon_data(selected_member)  # 更新雜項數據
 
@@ -541,18 +441,23 @@ def save_to_file():
     保存所有修改後的數據到存檔檔案。
     """
     try:
-        global selected_member, save_data, address_map, weapon_vars  # 聲明使用全局變數
+        global selected_member, save_data, address_map, weapon_vars,defpon_vars  # 聲明使用全局變數
 
-        # 確保 XEEN_editdata.weapon_utils 使用最新的全局變數
+        # 確保 XEEN_editdata.weapon_utils 使用最新的全局變數-武器
         XEEN_editdata.weapon_utils.address_map = address_map
         XEEN_editdata.weapon_utils.weapon_vars = weapon_vars
         XEEN_editdata.weapon_utils.save_data = save_data
 
+        # 確保 XEEN_editdata.weapon_utils 使用最新的全局變數-防具
+        XEEN_editdata.defpon_utils.address_map = address_map
+        XEEN_editdata.defpon_utils.defpon_vars = defpon_vars
+        XEEN_editdata.defpon_utils.save_data = save_data
 
         if selected_member:
-            XEEN_editdata.weapon_utils.save_weapon_data(selected_member)  # 修改這裡
+            XEEN_editdata.weapon_utils.save_weapon_data(selected_member)  # 武器
+            XEEN_editdata.defpon_utils.save_defpon_data(selected_member)  # 防具
             save_attribute_data(selected_member)
-            save_defpon_data(selected_member)
+            #save_defpon_data(selected_member)
             save_ringpon_data(selected_member)
             save_itempon_data(selected_member)
 
@@ -642,6 +547,11 @@ def load_new_file():
                 XEEN_editdata.weapon_utils.address_map = address_map
                 XEEN_editdata.weapon_utils.weapon_vars = weapon_vars
                 XEEN_editdata.weapon_utils.save_data = save_data
+
+                # 將主程式的全域變數賦值給 XEEN_editdata.weapon_utils
+                XEEN_editdata.defpon_utils.address_map = address_map
+                XEEN_editdata.defpon_utils.defpon_vars = defpon_vars
+                XEEN_editdata.defpon_utils.save_data = save_data
         except Exception as e:
             messagebox.showerror("錯誤", f"讀取檔案或更新數據時發生錯誤：{e}")  # 顯示錯誤訊息
 
@@ -832,12 +742,7 @@ tab_control.add(teams_frame, text=' 隊 伍 資 料 ')  # 添加隊伍資料標�
 
 # 設置標籤頁控制
 tab_control.pack(expand=1, fill='both')  # 使用 pack 佈局管理器，填充和自動調整大小
-'''
-# 綁定武器選單的事件
-for i in range(len(weapon_vars)):
-    for var in weapon_vars[i]:
-        var.trace('w', lambda *args, selected_member=selected_member, team_name_mapping=team_name_mapping, team_listbox=team_listbox: XEEN_editdata.weapon_utils.on_weapon_select(selected_member, team_name_mapping, team_listbox))
-'''
+
 # 創建按鈕框架來放置按鈕
 button_frame = ttk.Frame(root)  # 創建按鈕框架
 button_frame.pack(side='bottom', pady=10)  # 放置在底部，並添加垂直內邊距
