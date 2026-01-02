@@ -420,7 +420,7 @@ def init():
 
 # 創建 GUI
 root = tk.Tk()  # 創建 Tkinter 主視窗
-root.title("魔法門外傳合輯修改器")  # 設置視窗標題
+root.title("魔法門外傳合輯修改器 2025/12/31")  # 設置視窗標題
 
 # 定義驗證函數和命令
 def validate_input(value_if_allowed):
