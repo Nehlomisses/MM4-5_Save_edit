@@ -4,11 +4,17 @@ import os,struct,tkinter as tk  # 導入 os 模組，用於操作系統相關功
 import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils,XEEN_editdata.defpon_utils,XEEN_editdata.ringpon_utils,XEEN_editdata.itempon_utils #模組化區塊
 from tkinter import ttk, filedialog, messagebox  # 導入 tkinter 的子模組
 
+modified_data = {}  # 用於儲存被修改的隊員數據, 格式: {member: {offset: value}}
+is_modified = False  # 標記是否有任何修改
+
 # 從 common_dicts.py 導入多個字典
 from XEEN_editdata.common_dicts import (  
     weapon_type_mapping,  # 武器類型對應表
     WEAPON_ID_DESCRIPTIONS,  # 武器 ID 描述對應表
     WEAPON_SPECIAL_EFFECTS,  # 武器特殊效果對應表
+    WAP_Eq,                 #武器裝備種類
+    Def_Eq,                 #防具裝備種類
+    rinq_eq,                #飾品裝備種類
     def_Amo,  # 防具類型對應表
     ring_ID_EQ,  # 戒指 ID 對應表
     item_ID,  # 物品 ID 對應表
@@ -531,20 +537,47 @@ for i, label in enumerate(resistances):  # 遍歷 resistances 列表，為每個
     entry = tk.Entry(ability_frame, textvariable=var, width=8)  # 創建一個輸入框，並將其 textvariable 屬性設置為 var
     entry.grid(row=i, column=3, pady=2)  # 使用 grid 佈局管理器放置在網格中
 
+# 增加武器說明文字框架
+weapon_header_frame = ttk.Frame(weapon_frame)
+weapon_header_frame.pack(fill='x', padx=10, pady=5)
+
+# 說明文字和對應的寬度
+labels = ["","屬性", "武器種類", "特殊能力", "裝備類型"]
+widths = [18, 26, 17,12,0]  # 寬度與下拉式選單對應
+for i, text in enumerate(labels):
+    label = ttk.Label(weapon_header_frame, text=text, width=widths[i])
+    label.pack(side='left', padx=5)
+
+
 #武器
 weapon_vars = []
 for i in range(9):  # 9組武器
     weapon_frame_inner = ttk.Frame(weapon_frame)  # 創建武器標籤頁的內部框架
     weapon_frame_inner.pack(fill='x', padx=10, pady=5)  # 填充標籤頁，並添加內邊距
     ttk.Label(weapon_frame_inner, text=f"武器{i+1}").pack(side='left')  # 顯示武器編號標籤
-    weapon_vars.append([tk.StringVar(), tk.StringVar(), tk.StringVar()])  # 為每組武器創建 3 個 StringVar 變數
+    weapon_vars.append([tk.StringVar(), tk.StringVar(), tk.StringVar(),tk.StringVar()])  # 為每組武器創建 3 個 StringVar 變數
     for idx, var in enumerate(weapon_vars[-1]):  # 遍歷每組武器的 StringVar 變數
         if idx == 0:
             ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(weapon_type_mapping.values()), width=30).pack(side='left', padx=5)  # 創建武器類型 Combobox
         elif idx == 1:
-            ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WEAPON_ID_DESCRIPTIONS.values()), width=22).pack(side='left', padx=5)  # 創建武器 ID 描述 Combobox
-        else:
+            ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WEAPON_ID_DESCRIPTIONS.values()), width=20).pack(side='left', padx=5)  # 創建武器 ID 描述 Combobox
+        elif idx == 2:
             ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WEAPON_SPECIAL_EFFECTS.values()), width=10).pack(side='left', padx=5)  # 創建武器特殊效果 Combobox
+        else:
+            ttk.Combobox(weapon_frame_inner, textvariable=var, values=list(WAP_Eq.values()), width=8).pack(side='left', padx=5)  # 創建武器裝備選項 Combobox
+
+
+
+# 增加防具說明文字框架
+def_header_frame = ttk.Frame(def_frame)
+def_header_frame.pack(fill='x', padx=10, pady=5)
+
+# 說明文字和對應的寬度
+def_labels = ["","屬性", "防具種類", "裝備類型"]
+def_widths = [18,20, 11, 0]  # 寬度與下拉式選單對應
+for i, text in enumerate(def_labels):
+    label = ttk.Label(def_header_frame, text=text, width=def_widths[i])
+    label.pack(side='left', padx=5)
 
 #防具
 defpon_vars = []
@@ -552,12 +585,26 @@ for i in range(9):  # 9組防具
     defpon_frame_inner = ttk.Frame(def_frame)  # 創建防具標籤頁的內部框架
     defpon_frame_inner.pack(fill='x', padx=10, pady=5)  # 填充標籤頁，並添加內邊距
     ttk.Label(defpon_frame_inner, text=f"防具{i+1}").pack(side='left')  # 顯示防具編號標籤
-    defpon_vars.append([tk.StringVar(), tk.StringVar()])  # 為每組防具創建 2 個 StringVar 變數
+    defpon_vars.append([tk.StringVar(), tk.StringVar(), tk.StringVar()])  # 為每組防具創建 2 個 StringVar 變數
     for idx, var in enumerate(defpon_vars[-1]):  # 遍歷每組防具的 StringVar 變數
         if idx == 0:
             ttk.Combobox(defpon_frame_inner, textvariable=var, values=list(weapon_type_mapping.values()), width=30).pack(side='left', padx=5)  # 創建防具類型 Combobox
         elif idx == 1:
             ttk.Combobox(defpon_frame_inner, textvariable=var, values=list(def_Amo.values()), width=10).pack(side='left', padx=5)  # 創建防具屬性 Combobox
+        else:
+            ttk.Combobox(defpon_frame_inner, textvariable=var, values=list(Def_Eq.values()), width=6).pack(side='left', padx=5)  # 創建防具裝備選項 Combobox
+
+# 增加配件說明文字框架
+ring_header_frame = ttk.Frame(ring_frame)
+ring_header_frame.pack(fill='x', padx=10, pady=5)
+
+# 說明文字和對應的寬度
+ring_labels = ["","屬性", "配件種類", "裝備類型"]
+ring_widths = [18,22, 14, 0]  # 寬度與下拉式選單對應
+for i, text in enumerate(ring_labels):
+    label = ttk.Label(ring_header_frame, text=text, width=ring_widths[i])
+    label.pack(side='left', padx=5)
+
 
 #配件
 ring_vars = []
@@ -565,12 +612,26 @@ for i in range(9):  # 9組配件
     ring_frame_inner = ttk.Frame(ring_frame)  # 創建配件標籤頁的內部框架
     ring_frame_inner.pack(fill='x', padx=10, pady=5)  # 填充標籤頁，並添加內邊距
     ttk.Label(ring_frame_inner, text=f"配件{i+1}").pack(side='left')  # 顯示配件編號標籤
-    ring_vars.append([tk.StringVar(), tk.StringVar()])  # 為每組配件創建 2 個 StringVar 變數
+    ring_vars.append([tk.StringVar(), tk.StringVar(), tk.StringVar()])  # 為每組配件創建 2 個 StringVar 變數
     for idx, var in enumerate(ring_vars[-1]):  # 遍歷每組配件的 StringVar 變數
         if idx == 0:
             ttk.Combobox(ring_frame_inner, textvariable=var, values=list(weapon_type_mapping.values()), width=30).pack(side='left', padx=5)  # 創建配件類型 Combobox
         elif idx == 1:
             ttk.Combobox(ring_frame_inner, textvariable=var, values=list(ring_ID_EQ.values()), width=15).pack(side='left', padx=5)  # 創建配件 ID Combobox
+        else:
+            ttk.Combobox(ring_frame_inner, textvariable=var, values=list(rinq_eq.values()), width=6).pack(side='left', padx=5)  # 創建飾品裝備選項 Combobox
+
+
+# 增加雜項說明文字框架
+item_header_frame = ttk.Frame(item_frame)
+item_header_frame.pack(fill='x', padx=10, pady=5)
+
+# 說明文字和對應的寬度
+item_labels = ["","使用魔法", "物品種類"]
+item_widths = [5,12,0]  # 寬度與下拉式選單對應
+for i, text in enumerate(item_labels):
+    label = ttk.Label(item_header_frame, text=text, width=item_widths[i])
+    label.pack(side='left', padx=5)
 
 #雜項
 item_vars = []
