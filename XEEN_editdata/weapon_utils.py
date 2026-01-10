@@ -5,6 +5,7 @@ from XEEN_editdata.common_dicts import (
     weapon_type_mapping,
     WEAPON_ID_DESCRIPTIONS,
     WEAPON_SPECIAL_EFFECTS,
+    WAP_Eq,
 )
 
 # 宣告全局變數
@@ -26,7 +27,7 @@ def parse_weapon_data(data, start_addr):
     weapons = []  # 存儲武器數據的列表
     for i in range(9):  # 每個隊員有 9 個武器欄位
         addr = start_addr + i * 4  # 計算武器數據的位址
-        weapon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=3)  # 使用通用函數解析 3 個位元組的數據
+        weapon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=4)  # 使用通用函數解析 4 個位元組的數據，簡單說就是讀取前面4組
         weapons.append(weapon_data)  # 將武器數據添加到列表中
     return weapons  # 返回武器數據列表
 
@@ -47,6 +48,7 @@ def update_weapon_data(selected_member):
                 weapon_vars[idx][0].set(weapon_type_mapping.get(weapon[0], "未知"))
                 weapon_vars[idx][1].set(WEAPON_ID_DESCRIPTIONS.get(weapon[1], "未知"))
                 weapon_vars[idx][2].set(WEAPON_SPECIAL_EFFECTS.get(weapon[2], "未知"))
+                weapon_vars[idx][3].set(WAP_Eq.get(weapon[3], "未知"))
     except KeyError:
         messagebox.showerror("錯誤", f"找不到 '{selected_member}' 的武器地址。")  # 顯示錯誤訊息
     except Exception as e:
@@ -84,11 +86,12 @@ def save_weapon_data(member):
             weapon1 = next((key for key, value in weapon_type_mapping.items() if value == weapon_var[0].get()), None)
             weapon2 = next((key for key, value in WEAPON_ID_DESCRIPTIONS.items() if value == weapon_var[1].get()), None)
             weapon3 = next((key for key, value in WEAPON_SPECIAL_EFFECTS.items() if value == weapon_var[2].get()), None)
-
+            weapon4 = next((key for key, value in WAP_Eq.items() if value == weapon_var[3].get()), None)
             if weapon1 is not None and weapon2 is not None and weapon3 is not None:
                 struct.pack_into('B', save_data, addr, weapon1)  # 保存武器類型
                 struct.pack_into('B', save_data, addr + 1, weapon2)  # 保存武器 ID
                 struct.pack_into('B', save_data, addr + 2, weapon3)  # 保存武器特殊效果
+                struct.pack_into('B', save_data, addr + 3, weapon4)  # 保存武器裝備類型
     except KeyError:
         messagebox.showerror("錯誤", f"找不到 '{member}' 的武器地址。")  # 顯示錯誤訊息
     except Exception as e:

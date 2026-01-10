@@ -4,11 +4,12 @@ import XEEN_editdata
 from XEEN_editdata.common_dicts import (
     weapon_type_mapping,
     ring_ID_EQ,
+    rinq_eq, # 確保匯入 rinq_eq
 )
 
 # 宣告全局變數
 address_map = None
-ringpon_vars = None # 宣告為全域變數
+ringpon_vars = None
 save_data = None
 
 # 解析配件數據
@@ -23,12 +24,16 @@ def parse_ringpon_data(data, start_addr):
     Returns:
         list: 包含解析後配件數據的列表。
     """
-    ringpons = []  # 存儲配件數據的列表
+    ringpons = []
     for i in range(9):  # 每個隊員有 9 個配件欄位
         addr = start_addr + i * 4  # 計算配件數據的位址
-        ringpon_data = XEEN_editdata.gui_utils.parse_data(data, addr, count=2)  # 使用通用函數解析 2 個位元組的數據
-        ringpons.append(ringpon_data)  # 將配件數據添加到列表中
-    return ringpons  # 返回配件數據列表
+        # 讀取指定位元組
+        ringpon1 = data[addr]
+        ringpon2 = data[addr + 1]
+        ringpon4 = data[addr + 3] if addr + 3 < len(data) else None  # 讀取裝備類型, 确保不越界
+
+        ringpons.append((ringpon1, ringpon2, ringpon4))  # 将配件数据添加到列表中
+    return ringpons
 
 # 更新顯示的配件數據
 def update_ringpon_data(member):
@@ -39,17 +44,18 @@ def update_ringpon_data(member):
         member (str): 隊員名稱。
     """
     try:
-        base_addr = address_map[member] + 0x48  # 根據隊員名稱獲取配件數據的起始位址 (相較於武器位址偏移 0x48)
-        ringpon_data = parse_ringpon_data(save_data, base_addr)  # 解析配件數據
-        for idx, ringpon in enumerate(ringpon_data):  # 遍歷配件數據
-            if idx < len(ring_vars):  # 確保 GUI 元素存在
+        base_addr = address_map[member] + 0x48
+        ringpon_data = parse_ringpon_data(save_data, base_addr)
+        for idx, (ringpon1, ringpon2, ringpon4) in enumerate(ringpon_data):  # 修改這裡
+            if idx < len(ring_vars):
                 # 使用配件數據更新 GUI 變數
-                ring_vars[idx][0].set(weapon_type_mapping.get(ringpon[0], "未知"))
-                ring_vars[idx][1].set(ring_ID_EQ.get(ringpon[1], "未知"))
+                ring_vars[idx][0].set(weapon_type_mapping.get(ringpon1, "未知"))
+                ring_vars[idx][1].set(ring_ID_EQ.get(ringpon2, "未知"))
+                ring_vars[idx][2].set(rinq_eq.get(ringpon4, "未知")) # 修改這裡，使用 rinq_eq
     except KeyError:
-        messagebox.showerror("錯誤", f"找不到 '{member}' 的配件地址。")  # 顯示錯誤訊息
+        messagebox.showerror("錯誤", f"找不到 '{member}' 的配件地址。")
     except Exception as e:
-        messagebox.showerror("錯誤", f"更新配件數據時發生錯誤：{e}")  # 顯示錯誤訊息
+        messagebox.showerror("錯誤", f"更新配件數據時發生錯誤：{e}")
 
 # 保存配件數據
 def save_ringpon_data(member):
@@ -60,20 +66,23 @@ def save_ringpon_data(member):
         member (str): 隊員名稱。
     """
     try:
-        base_addr = address_map[member] + 0x48  # 根據隊員名稱獲取配件數據的起始位址
-        for idx, ringpon_var in enumerate(ring_vars):  # 遍歷配件 GUI 變數
-            addr = base_addr + idx * 4  # 計算配件數據的位址
+        base_addr = address_map[member] + 0x48
+        for idx, ringpon_var in enumerate(ring_vars):
+            addr = base_addr + idx * 4
             # 從 GUI 變數獲取配件數據，並轉換為對應的 ID
             ringpon1 = next((key for key, value in weapon_type_mapping.items() if value == ringpon_var[0].get()), None)
             ringpon2 = next((key for key, value in ring_ID_EQ.items() if value == ringpon_var[1].get()), None)
+            ringpon4 = next((key for key, value in rinq_eq.items() if value == ringpon_var[2].get()), None)  # 新增，使用 rinq_eq
 
-            if ringpon1 is not None and ringpon2 is not None:
+            if ringpon1 is not None and ringpon2 is not None and ringpon4 is not None: # 修改這裡
                 struct.pack_into('B', save_data, addr, ringpon1)  # 保存配件類型
                 struct.pack_into('B', save_data, addr + 1, ringpon2)  # 保存配件屬性
+                struct.pack_into('B', save_data, addr + 3, ringpon4)  # 保存裝備類型 # 修改這裡
+
     except KeyError:
-        messagebox.showerror("錯誤", f"找不到 '{member}' 的配件地址。")  # 顯示錯誤訊息
+        messagebox.showerror("錯誤", f"找不到 '{member}' 的配件地址。")
     except Exception as e:
-        messagebox.showerror("錯誤", f"保存配件數據時發生錯誤：{e}")  # 顯示錯誤訊息
+        messagebox.showerror("錯誤", f"保存配件數據時發生錯誤：{e}")
 
 # 恢復配件選單的隊員選取狀態
 def on_ringpon_select(*args):
@@ -83,11 +92,11 @@ def on_ringpon_select(*args):
     try:
         global selected_member
         if selected_member and team_name_mapping:  # 增加判斷，確保有選取隊員且隊伍資訊不為空
-            member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]  # 獲取隊員名稱
-            if member_name in team_listbox.get(0, 'end'):  # 檢查隊員是否存在於清單中
-                team_listbox.selection_clear(0, 'end')  # 清除所有選取
-                team_listbox.selection_set(team_listbox.get(0, 'end').index(member_name))  # 重新選取隊員
+            member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]
+            if member_name in team_listbox.get(0, 'end'):
+                team_listbox.selection_clear(0, 'end')
+                team_listbox.selection_set(team_listbox.get(0, 'end').index(member_name))
     except ValueError:
-        print("警告: 無法恢復隊員選擇。")  # 打印警告訊息
+        print("警告: 無法恢復隊員選擇。")
     except Exception as e:
-        messagebox.showerror("錯誤", f"恢復配件選單的隊員選取狀態發生錯誤：{e}")  # 顯示錯誤訊息
+        messagebox.showerror("錯誤", f"恢復配件選單的隊員選取狀態發生錯誤：{e}")
