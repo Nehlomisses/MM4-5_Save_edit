@@ -1,8 +1,17 @@
 #模組化版本
-
+import sys  # 確保有這行
 import os,struct,tkinter as tk  # 導入 os 模組，用於操作系統相關功能,struct處理二進位數據,導入 tkinter 模組，用於 GUI
 import XEEN_editdata.gui_utils,XEEN_editdata.weapon_utils,XEEN_editdata.defpon_utils,XEEN_editdata.ringpon_utils,XEEN_editdata.itempon_utils #模組化區塊
 from tkinter import ttk, filedialog, messagebox  # 導入 tkinter 的子模組
+
+
+def resource_path(relative_path):
+    """取得資源的絕對路徑，支援開發環境與 PyInstaller 打包環境"""
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+    return os.path.join(base_path, relative_path)
 
 modified_data = {}  # 用於儲存被修改的隊員數據, 格式: {member: {offset: value}}
 is_modified = False  # 標記是否有任何修改
@@ -426,7 +435,9 @@ def init():
 
 # 創建 GUI
 root = tk.Tk()  # 創建 Tkinter 主視窗
-root.title("魔法門外傳合輯修改器 2025/12/31")  # 設置視窗標題
+root.title("魔法門外傳合輯修改器 2026/01/21 Ver.2.1")  # 設置視窗標題
+icon_path = resource_path("xeen.ico")
+root.iconbitmap(icon_path)
 
 # 定義驗證函數和命令
 def validate_input(value_if_allowed):
@@ -627,7 +638,7 @@ item_header_frame = ttk.Frame(item_frame)
 item_header_frame.pack(fill='x', padx=10, pady=5)
 
 # 說明文字和對應的寬度
-item_labels = ["","使用魔法", "物品種類"]
+item_labels = ["","物品種類", "魔法種類"]
 item_widths = [5,12,0]  # 寬度與下拉式選單對應
 for i, text in enumerate(item_labels):
     label = ttk.Label(item_header_frame, text=text, width=item_widths[i])
