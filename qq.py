@@ -402,6 +402,8 @@ def load_new_file():
                 update_team_listbox()  # 更新隊員列表
                 parse_team_data(save_data)  # 解析隊伍數據
                 update_team_data_display()  # 更新隊伍數據顯示
+                
+
 
                 # 將主程式的全域變數賦值給 XEEN_editdata.weapon_utils-武器
                 XEEN_editdata.weapon_utils.address_map = address_map
@@ -423,8 +425,16 @@ def load_new_file():
                 XEEN_editdata.itempon_utils.item_vars = item_vars
                 XEEN_editdata.itempon_utils.save_data = save_data
 
+                # 選擇列表中的第一項 (如果有的話)
+                if team_listbox.size() > 0:
+                    team_listbox.selection_clear(0, tk.END)  # 清除所有現有選擇
+                    team_listbox.selection_set(0)  # 選擇第一項
+                    team_listbox.event_generate('<<ListboxSelect>>')  # 觸發選取事
+
         except Exception as e:
             messagebox.showerror("錯誤", f"讀取檔案或更新數據時發生錯誤：{e}")  # 顯示錯誤訊息
+
+
 
 # 初始載入
 def init():
@@ -435,9 +445,11 @@ def init():
 
 # 創建 GUI
 root = tk.Tk()  # 創建 Tkinter 主視窗
-root.title("魔法門外傳合輯修改器 2026/01/21 Ver.2.1")  # 設置視窗標題
+root.title("魔法門外傳合輯修改器 2026/01/23 Ver.2.2")  # 設置視窗標題
 icon_path = resource_path("xeen.ico")
 root.iconbitmap(icon_path)
+# 設定最小視窗大小
+root.minsize(800, 450)  # 設定最小寬度為 800 像素，最小高度為 600 像素
 
 # 定義驗證函數和命令
 def validate_input(value_if_allowed):
@@ -478,6 +490,7 @@ team_listbox.config(yscrollcommand=scrollbar.set)
 # 創建標籤頁
 tab_control = ttk.Notebook(main_frame)  # 創建標籤頁控制元件
 tab_control.pack(side='right', fill='both', expand=True)  # 使用 pack 佈局管理器，將標籤頁控制元件放置在主框架的右側，並填充和自動調整大小
+
 
 # 創建能力標籤頁
 abilities_frame = ttk.Frame(tab_control)  # 創建能力標籤頁框架
@@ -671,17 +684,40 @@ tab_control.add(teams_frame, text=' 隊 伍 資 料 ')  # 添加隊伍資料標�
 # 設置標籤頁控制
 tab_control.pack(expand=1, fill='both')  # 使用 pack 佈局管理器，填充和自動調整大小
 
-# 創建按鈕框架來放置按鈕
-button_frame = ttk.Frame(root)  # 創建按鈕框架
-button_frame.pack(side='bottom', pady=10)  # 放置在底部，並添加垂直內邊距
+# 創建按鈕框架
+button_frame = ttk.Frame(root)
+button_frame.place(relx=0.5, rely=1.0, anchor="s", y=-10)  # 放置在底部，並添加垂直內邊距
 
 # 增加讀取檔案按鈕
-load_button = ttk.Button(button_frame, text="讀檔", command=load_new_file)  # 創建讀檔按鈕，並綁定 load_new_file 函數
+load_button = ttk.Button(button_frame, text="讀檔", command=load_new_file)
 load_button.pack(side='left', padx=5)  # 放置在左側，並添加水平內邊距
 
 # 增加存檔按鈕
-save_button = ttk.Button(button_frame, text="存檔", command=save_to_file)  # 創建存檔按鈕，並綁定 save_to_file 函數
+save_button = ttk.Button(button_frame, text="存檔", command=save_to_file)
 save_button.pack(side='left', padx=5)  # 放置在左側，並添加水平內邊距
+
+
+
+def on_tab_changed(event):
+    """
+    處理標籤頁切換事件，保持隊員列表的選取狀態。
+    """
+    if selected_member:
+        # 獲取選取隊員在列表中的索引
+        try:
+            member_name = list(team_name_mapping.keys())[list(team_name_mapping.values()).index(selected_member)]
+            index = team_listbox.get(0, tk.END).index(member_name)
+            # 清除所有選取
+            team_listbox.selection_clear(0, tk.END)
+            # 重新選取隊員
+            team_listbox.selection_set(index)
+            team_listbox.activate(index)  # 確保選取可見
+        except ValueError:
+            # 如果隊員不在列表中，則不執行任何操作
+            pass
+
+# 綁定標籤頁切換事件
+tab_control.bind("<<NotebookTabChanged>>", on_tab_changed)
 
 # 初始載入
 def init():
